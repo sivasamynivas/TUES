@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL Basics Quiz: Primary Key, Foreign Key &amp; Subqueries</title>
+<meta name="description" content="A 30-question interactive quiz on SQL primary keys, foreign keys and subqueries, with instant feedback and explanations.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #E9EFF3;
+    --card: #FFFFFF;
+    --ink: #12263A;
+    --muted: #4F6378;
+    --line: #C7D3DC;
+
+    --pk: #B87A00;
+    --pk-tint: #FFF0C7;
+    --fk: #0B7F86;
+    --fk-tint: #D3EFF0;
+    --sq: #5640CF;
+    --sq-tint: #E3DEFA;
+
+    --good: #17744A;
+    --good-tint: #D8F1E3;
+    --bad: #B0302D;
+    --bad-tint: #FADCDA;
+
+    --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+    --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+    --accent: var(--ink);
+    --accent-tint: #DDE6EC;
+  }
+  [data-topic="pk"] { --accent: var(--pk); --accent-tint: var(--pk-tint); }
+  [data-topic="fk"] { --accent: var(--fk); --accent-tint: var(--fk-tint); }
+  [data-topic="sq"] { --accent: var(--sq); --accent-tint: var(--sq-tint); }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.1; letter-spacing: -0.02em; }
+  p { margin: 0; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 6px; }
+  [hidden] { display: none !important; }
+
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 28px 22px 56px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
+  .brand-mark { display: inline-grid; grid-template-columns: repeat(3, 10px); gap: 3px; }
+  .brand-mark i { width: 10px; height: 22px; border-radius: 3px; display: block; }
+  .brand-mark i:nth-child(1) { background: var(--pk); }
+  .brand-mark i:nth-child(2) { background: var(--fk); }
+  .brand-mark i:nth-child(3) { background: var(--sq); }
+
+  /* ---------- Start screen ---------- */
+  .hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 44px; align-items: center; padding: 40px 0 28px; }
+  .hero h1 { font-size: clamp(2.5rem, 6vw, 4.2rem); font-weight: 800; }
+  .hero .lede { margin-top: 18px; max-width: 34ch; font-size: 1.15rem; color: var(--muted); }
+
+  .schema { background: var(--card); border: 2px solid var(--ink); border-radius: 18px; padding: 14px; box-shadow: 8px 8px 0 var(--ink); }
+  .schema svg { width: 100%; height: auto; display: block; }
+  .schema text { font-family: var(--mono); font-size: 13px; fill: var(--ink); }
+  .schema .t-head { font-family: var(--display); font-weight: 700; font-size: 15px; fill: #fff; }
+  .schema .tag { font-size: 11px; font-weight: 500; }
+  .schema .link { stroke-dasharray: 260; stroke-dashoffset: 260; animation: draw 1.4s 0.4s ease forwards; }
+  .schema .link-end { opacity: 0; animation: pop .3s 1.6s forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes pop { to { opacity: 1; } }
+  .schema-cap { margin: 10px 6px 2px; font-size: .92rem; color: var(--muted); }
+
+  .picker { margin-top: 18px; }
+  .picker h2 { font-size: 1.35rem; margin-bottom: 14px; }
+  .topics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; border: 0; padding: 0; margin: 0; }
+  .topic { position: relative; }
+  .topic input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .topic label {
+    display: flex; flex-direction: column; gap: 6px; height: 100%;
+    background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 16px;
+    transition: border-color .15s, background-color .15s, transform .15s;
+  }
+  .topic .name { font-family: var(--display); font-weight: 700; font-size: 1.15rem; }
+  .topic .meta { font-size: .9rem; color: var(--muted); }
+  .topic .swatch { width: 34px; height: 8px; border-radius: 99px; background: var(--accent); margin-bottom: 4px; }
+  .topic input:checked + label { border-color: var(--accent); background: var(--accent-tint); }
+  .topic input:focus-visible + label { outline: 3px solid var(--ink); outline-offset: 3px; }
+  .topic label:hover { border-color: var(--accent); }
+
+  .start-row { margin-top: 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
+  .best { color: var(--muted); font-size: .95rem; }
+
+  .btn {
+    background: var(--ink); color: #fff; border: 2px solid var(--ink); border-radius: 12px;
+    padding: 13px 24px; font-weight: 600; font-size: 1.02rem;
+    transition: transform .12s, background-color .15s;
+  }
+  .btn:hover { background: #1F3D5A; }
+  .btn:active { transform: translateY(1px); }
+  .btn.ghost { background: transparent; color: var(--ink); }
+  .btn.ghost:hover { background: rgba(18, 38, 58, .08); }
+
+  /* ---------- Quiz screen ---------- */
+  .quiz { max-width: 760px; margin: 28px auto 0; }
+  .qbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-tint); color: var(--ink); font-weight: 600; font-size: .92rem; padding: 5px 12px 5px 8px; border-radius: 99px; }
+  .chip::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+  .count { font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .progress { margin-top: 12px; height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .progress > div { height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .35s ease; }
+
+  .qcard { margin-top: 20px; background: var(--card); border: 2px solid var(--ink); border-radius: 18px; padding: 28px 26px 24px; box-shadow: 6px 6px 0 var(--accent); }
+  .qcard h2 { font-size: clamp(1.4rem, 3.4vw, 1.85rem); font-weight: 700; outline: none; }
+  .sql { margin: 16px 0 0; background: #0F2133; color: #E6F0F7; border-radius: 10px; padding: 14px 16px; font-family: var(--mono); font-size: .92rem; overflow-x: auto; white-space: pre; }
+
+  .options { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 10px; }
+  .opt {
+    width: 100%; display: flex; align-items: flex-start; gap: 14px; text-align: left;
+    background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: 13px 16px;
+    transition: border-color .15s, background-color .15s;
+  }
+  .opt .letter {
+    flex: none; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+    background: var(--accent-tint); font-family: var(--display); font-weight: 700; font-size: .95rem;
+  }
+  .opt .txt { padding-top: 3px; }
+  .opt .txt.code { font-family: var(--mono); font-size: .86rem; padding-top: 5px; word-break: break-word; }
+  .opt:not([disabled]):hover { border-color: var(--accent); background: var(--accent-tint); }
+  .opt[disabled] { cursor: default; }
+  .opt.correct { border-color: var(--good); background: var(--good-tint); }
+  .opt.correct .letter { background: var(--good); color: #fff; }
+  .opt.wrong { border-color: var(--bad); background: var(--bad-tint); }
+  .opt.wrong .letter { background: var(--bad); color: #fff; }
+  .opt.dim { opacity: .55; }
+
+  .feedback { margin-top: 20px; border-radius: 12px; padding: 14px 16px; border-left: 6px solid var(--good); background: var(--good-tint); }
+  .feedback.no { border-left-color: var(--bad); background: var(--bad-tint); }
+  .feedback strong { display: block; font-family: var(--display); font-size: 1.1rem; margin-bottom: 2px; }
+  .next-row { margin-top: 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .hint-keys { color: var(--muted); font-size: .88rem; }
+  kbd { font-family: var(--mono); font-size: .8rem; background: #fff; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; }
+  .quit { background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 6px 0; margin-top: 14px; }
+
+  /* ---------- Results ---------- */
+  .results { max-width: 820px; margin: 28px auto 0; }
+  .score-card { background: var(--card); border: 2px solid var(--ink); border-radius: 18px; padding: 28px; box-shadow: 8px 8px 0 var(--ink); display: grid; grid-template-columns: auto 1fr; gap: 30px; align-items: center; }
+  .ring { position: relative; width: 168px; height: 168px; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 14; }
+  .ring .bg { stroke: var(--line); }
+  .ring .fg { stroke: var(--ink); stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 440; transition: stroke-dashoffset 1.1s cubic-bezier(.2, .8, .2, 1); }
+  .ring .num { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; font-family: var(--display); font-weight: 800; font-size: 2.3rem; line-height: 1; }
+  .ring .num small { display: block; font-family: var(--body); font-weight: 500; font-size: .85rem; color: var(--muted); margin-top: 4px; }
+  .score-card h2 { font-size: clamp(1.7rem, 4vw, 2.4rem); }
+  .score-card .sub { margin-top: 8px; color: var(--muted); }
+  .breakdown { margin-top: 18px; display: grid; gap: 10px; }
+  .brow { display: grid; grid-template-columns: 110px 1fr 52px; gap: 12px; align-items: center; font-size: .95rem; font-weight: 500; }
+  .brow .bar { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .brow .bar > div { height: 100%; background: var(--accent); border-radius: 99px; }
+  .brow .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .res-actions { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 12px; }
+
+  .review { margin-top: 36px; }
+  .review h3 { font-size: 1.5rem; margin-bottom: 14px; }
+  .rev-item { background: var(--card); border: 2px solid var(--line); border-left: 8px solid var(--accent); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+  .rev-item .rq { font-weight: 600; }
+  .rev-item .ans { margin-top: 10px; display: grid; gap: 4px; font-size: .96rem; }
+  .rev-item .yours { color: var(--bad); }
+  .rev-item .right { color: var(--good); font-weight: 600; }
+  .rev-item .why { margin-top: 8px; color: var(--muted); font-size: .95rem; }
+  .rev-item code { font-family: var(--mono); font-size: .85rem; }
+  .perfect { background: var(--good-tint); border: 2px solid var(--good); border-radius: 12px; padding: 16px 18px; font-weight: 600; }
+
+  footer { margin-top: 48px; color: var(--muted); font-size: .9rem; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 24px; }
+    .topics { grid-template-columns: 1fr 1fr; }
+    .score-card { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+    .brow { text-align: left; }
+  }
+  @media (max-width: 480px) {
+    body { font-size: 16px; }
+    .wrap { padding: 20px 16px 44px; }
+    .qcard { padding: 22px 18px 20px; }
+    .brow { grid-template-columns: 90px 1fr 46px; }
+    .hint-keys { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .schema .link { stroke-dashoffset: 0; }
+    .schema .link-end { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="brand" aria-label="SQL Basics Quiz">
+    <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+    SQL Basics Quiz
+  </header>
+
+  <!-- START -->
+  <main id="start">
+    <section class="hero">
+      <div>
+        <h1>Keys and subqueries, one question at a time.</h1>
+        <p class="lede">30 multiple-choice questions on primary keys, foreign keys and subqueries. You get the answer and a short reason after every question.</p>
+      </div>
+      <figure class="schema" style="margin:0">
+        <svg viewBox="0 0 440 250" role="img" aria-label="Diagram: the Customers table's Customer_ID primary key is referenced by the Orders table's Customer_ID foreign key.">
+          <!-- Customers -->
+          <rect x="8" y="20" width="176" height="150" rx="10" fill="#fff" stroke="#12263A" stroke-width="2"/>
+          <path d="M8 30a10 10 0 0 1 10-10h156a10 10 0 0 1 10 10v16H8z" fill="#12263A"/>
+          <text class="t-head" x="22" y="40">Customers</text>
+          <rect x="8" y="58" width="176" height="34" fill="#FFF0C7"/>
+          <text x="22" y="80">Customer_ID</text>
+          <text class="tag" x="152" y="80" fill="#B87A00" style="fill:#8A5C00;font-weight:700">PK</text>
+          <text x="22" y="116" style="fill:#4F6378">Customer_Name</text>
+          <text x="22" y="148" style="fill:#4F6378">City</text>
+          <!-- Orders -->
+          <rect x="256" y="20" width="176" height="150" rx="10" fill="#fff" stroke="#12263A" stroke-width="2"/>
+          <path d="M256 30a10 10 0 0 1 10-10h156a10 10 0 0 1 10 10v16H256z" fill="#12263A"/>
+          <text class="t-head" x="270" y="40">Orders</text>
+          <text x="270" y="80" style="fill:#4F6378">Order_ID</text>
+          <text class="tag" x="400" y="80" style="fill:#8A5C00;font-weight:700">PK</text>
+          <rect x="256" y="92" width="176" height="34" fill="#D3EFF0"/>
+          <text x="270" y="114">Customer_ID</text>
+          <text class="tag" x="400" y="114" style="fill:#0B7F86;font-weight:700">FK</text>
+          <text x="270" y="148" style="fill:#4F6378">Order_Amount</text>
+          <!-- link -->
+          <path class="link" d="M184 75 C 215 75, 215 109, 250 109" fill="none" stroke="#0B7F86" stroke-width="3"/>
+          <circle class="link-end" cx="184" cy="75" r="5" fill="#0B7F86"/>
+          <path class="link-end" d="M242 102l10 7-10 7z" fill="#0B7F86"/>
+          <!-- subquery -->
+          <rect x="8" y="190" width="424" height="48" rx="10" fill="#E3DEFA" stroke="#5640CF" stroke-width="2"/>
+          <text x="22" y="219" style="fill:#12263A;font-size:12.5px">WHERE Salary &gt; (SELECT AVG(Salary) ...)</text>
+        </svg>
+        <figcaption class="schema-cap">A foreign key points to a primary key. A subquery is a query inside a query.</figcaption>
+      </figure>
+    </section>
+
+    <section class="picker">
+      <h2>Choose what to practise</h2>
+      <fieldset class="topics" style="min-inline-size:0">
+        <legend style="position:absolute;left:-9999px">Quiz topic</legend>
+        <div class="topic" data-topic="all">
+          <input type="radio" name="topic" id="t-all" value="all" checked>
+          <label for="t-all"><span class="swatch" style="background:linear-gradient(90deg,var(--pk) 33%,var(--fk) 33% 66%,var(--sq) 66%)"></span><span class="name">All topics</span><span class="meta">30 questions</span></label>
+        </div>
+        <div class="topic" data-topic="pk">
+          <input type="radio" name="topic" id="t-pk" value="pk">
+          <label for="t-pk"><span class="swatch"></span><span class="name">Primary key</span><span class="meta">10 questions</span></label>
+        </div>
+        <div class="topic" data-topic="fk">
+          <input type="radio" name="topic" id="t-fk" value="fk">
+          <label for="t-fk"><span class="swatch"></span><span class="name">Foreign key</span><span class="meta">10 questions</span></label>
+        </div>
+        <div class="topic" data-topic="sq">
+          <input type="radio" name="topic" id="t-sq" value="sq">
+          <label for="t-sq"><span class="swatch"></span><span class="name">Subqueries</span><span class="meta">10 questions</span></label>
+        </div>
+      </fieldset>
+      <div class="start-row">
+        <button class="btn" id="startBtn" type="button">Start quiz</button>
+        <span class="best" id="bestNote"></span>
+      </div>
+    </section>
+  </main>
+
+  <!-- QUIZ -->
+  <main id="quiz" class="quiz" hidden>
+    <div class="qbar">
+      <span class="chip" id="qChip">Primary key</span>
+      <span class="count" id="qCount" aria-live="polite">Question 1 of 10</span>
+    </div>
+    <div class="progress" role="progressbar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar"><div id="progressFill"></div></div>
+
+    <section class="qcard" id="qCard">
+      <h2 id="qText" tabindex="-1"></h2>
+      <pre class="sql" id="qSql" hidden></pre>
+      <ul class="options" id="options"></ul>
+      <div id="feedback" aria-live="polite"></div>
+      <div class="next-row" id="nextRow" hidden>
+        <span class="hint-keys">Press <kbd>Enter</kbd> for the next question</span>
+        <button class="btn" id="nextBtn" type="button">Next question</button>
+      </div>
+    </section>
+    <button class="quit" id="quitBtn" type="button">Quit and go back to the start</button>
+  </main>
+
+  <!-- RESULTS -->
+  <main id="results" class="results" hidden>
+    <section class="score-card">
+      <div class="ring">
+        <svg viewBox="0 0 160 160" aria-hidden="true"><circle class="bg" cx="80" cy="80" r="70"/><circle class="fg" id="ringFg" cx="80" cy="80" r="70"/></svg>
+        <div class="num"><span id="ringNum">0</span><small id="ringOf">of 30</small></div>
+      </div>
+      <div>
+        <h2 id="resTitle"></h2>
+        <p class="sub" id="resSub"></p>
+        <div class="breakdown" id="breakdown"></div>
+        <div class="res-actions">
+          <button class="btn" id="retryMissed" type="button">Retry missed questions</button>
+          <button class="btn ghost" id="retryAll" type="button">Take it again</button>
+          <button class="btn ghost" id="homeBtn" type="button">Choose another topic</button>
+        </div>
+      </div>
+    </section>
+    <section class="review" id="review"></section>
+  </main>
+
+  <footer>Tip: on the keyboard, press A, B, C or D to answer.</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var TOPICS = {
+    pk: { name: "Primary key" },
+    fk: { name: "Foreign key" },
+    sq: { name: "Subqueries" }
+  };
+
+  /* t = topic, q = question, o = options, a = index of correct option, why = short explanation */
+  var QUESTIONS = [
+    // ---- Primary key ----
+    { t: "pk", q: "What is the main purpose of a PRIMARY KEY?", o: ["To sort rows alphabetically", "To uniquely identify each row", "To calculate totals", "To connect to the internet"], a: 1, why: "A primary key gives every row its own identity, so you can always point to exactly one row." },
+    { t: "pk", q: "Which rule applies to a PRIMARY KEY?", o: ["Duplicate values are allowed", "NULL values are allowed", "Values must be unique and not NULL", "It must contain text only"], a: 2, why: "A primary key combines two rules: every value is unique, and no value is NULL. It can be any data type, not just text." },
+    { t: "pk", q: "In a Customers table, which column is usually a good PRIMARY KEY?", o: ["Customer_Name", "City", "Customer_ID", "Salary"], a: 2, why: "Customer_ID is made to be unique for each customer. Names, cities and salaries can repeat." },
+    { t: "pk", q: "What happens if you insert a duplicate PRIMARY KEY value in MySQL?", o: ["The row is accepted twice", "MySQL rejects the insert", "MySQL changes the ID automatically in every case", "The table is deleted"], a: 1, why: "MySQL stops the insert and returns a \"Duplicate entry\" error. The existing data stays as it was." },
+    { t: "pk", q: "Which SQL definition correctly declares Customer_ID as a primary key?", o: ["Customer_ID INT UNIQUE KEY ONLY", "Customer_ID INT PRIMARY KEY", "PRIMARY Customer_ID INT", "Customer_ID PRIMARY INT"], a: 1, code: [0, 1, 2, 3], why: "The column pattern is: column name, data type, then PRIMARY KEY." },
+    { t: "pk", q: "Can a table have more than one PRIMARY KEY constraint?", o: ["Yes, any number", "No, one primary key constraint per table", "Only if all columns are text", "Only if the table has no rows"], a: 1, why: "A table has one primary key constraint. That one key can cover several columns together (a composite key)." },
+    { t: "pk", q: "A Students table uses Student_ID as its PRIMARY KEY. Can two students have Student_ID 105?", o: ["Yes, if their names differ", "Yes, only on weekends", "No, the key must be unique", "Yes, if their cities differ"], a: 2, why: "Uniqueness applies to the key column itself. Other columns being different does not help." },
+    { t: "pk", q: "Which value is not allowed in a PRIMARY KEY column?", o: ["0", "101", "-5", "NULL"], a: 3, why: "NULL means \"unknown\", so it cannot identify a row. 0 and negative numbers are ordinary values and are allowed." },
+    { t: "pk", q: "Which statement about a PRIMARY KEY is correct?", o: ["It identifies a row uniquely", "It always stores a person's name", "It can only be used in SELECT", "It automatically calculates averages"], a: 0, why: "Identifying each row uniquely is the whole job of a primary key. It is defined on the table and used everywhere." },
+    { t: "pk", q: "Why is Customer_ID often better than Customer_Name as a primary key?", o: ["Names are always numbers", "Names may repeat or change", "IDs cannot be stored in tables", "Names cannot contain letters"], a: 1, why: "Two customers can share a name, and a name can change after a marriage or a typo fix. An ID stays stable." },
+
+    // ---- Foreign key ----
+    { t: "fk", q: "What is the main purpose of a FOREIGN KEY?", o: ["To format text", "To connect tables and enforce valid references", "To sort data", "To create charts"], a: 1, why: "A foreign key links a row in one table to a row in another, and the database checks that the link is valid." },
+    { t: "fk", q: "A foreign key in Orders refers to Customer_ID in Customers. Customers is the:", o: ["Child table", "Temporary table", "Parent table", "View only"], a: 2, why: "The table being referred to is the parent. The table holding the foreign key (Orders) is the child." },
+    { t: "fk", q: "Can a foreign key value repeat in a child table?", o: ["No, never", "Yes, it can repeat", "Only if it is a date", "Only if the table has no rows"], a: 1, why: "One customer can place many orders, so the same Customer_ID appears many times in Orders." },
+    { t: "fk", q: "If Customer_ID 999 does not exist in Customers, what happens when an order references it and a foreign key is enforced?", o: ["The insert is rejected", "MySQL creates the customer automatically", "The customer table is renamed", "The order is always accepted"], a: 0, why: "With the constraint enforced, the database refuses an order that points to a customer that does not exist." },
+    { t: "fk", q: "Which column is most likely to be a foreign key in Orders?", o: ["Order_Description", "Customer_ID", "Order_Amount", "Order_Date"], a: 1, why: "Customer_ID links each order back to the Customers table. The other columns just describe the order." },
+    { t: "fk", q: "Which statement is true about a foreign key?", o: ["It must always be unique", "It can refer to a key in another table", "It replaces every primary key", "It stores only decimal values"], a: 1, why: "A foreign key refers to a key (usually the primary key) in another table. It does not have to be unique." },
+    { t: "fk", q: "What should generally exist before inserting a child row with a foreign key?", o: ["A matching parent row", "A chart", "A stored procedure", "A duplicate child row"], a: 0, why: "Insert the customer first, then the order. The child row needs a parent to point to." },
+    { t: "fk", q: "Which pair best represents a parent-child relationship?", o: ["Customers and Orders", "Salary and City", "SELECT and FROM", "Name and spelling"], a: 0, why: "Customers (parent) and Orders (child) are linked by a key. The other pairs are not tables related by keys." },
+    { t: "fk", q: "In Students(Student_ID) and Enrollments(Student_ID), which column can be the foreign key?", o: ["Students.Student_ID only", "Enrollments.Student_ID", "Both must be foreign keys automatically", "Neither column can be a key"], a: 1, why: "Enrollments is the child table, so Enrollments.Student_ID is the one that refers back to Students." },
+    { t: "fk", q: "What problem can occur when there is no foreign key constraint?", o: ["A row may refer to a missing customer", "All queries stop working", "SQL cannot store numbers", "Tables cannot have columns"], a: 0, why: "Without the constraint, nothing stops an order from pointing to a customer that was never added or was deleted." },
+
+    // ---- Subqueries ----
+    { t: "sq", q: "What is a subquery?", o: ["A query inside another query", "A database password", "A table without columns", "A type of chart"], a: 0, why: "A subquery is a SELECT written inside another SQL statement." },
+    { t: "sq", q: "Where is a common place to write a subquery?", o: ["Inside parentheses in a WHERE condition", "Only inside a comment", "Only after DROP DATABASE", "Only in a file name"], a: 0, why: "Subqueries are wrapped in parentheses, and WHERE is the most common spot for them." },
+    { t: "sq", q: "What does this inner query return?", sql: "SELECT AVG(Salary) FROM Employees;", o: ["The highest salary", "The average salary", "The employee count only", "The department name"], a: 1, why: "AVG() calculates the average of the column, here the average salary of all employees." },
+    { t: "sq", q: "Which query finds employees earning above the average salary?", o: ["SELECT * FROM Employees WHERE Salary > (SELECT AVG(Salary) FROM Employees);", "SELECT AVG(*) FROM Employees;", "SELECT * FROM Employees WHERE Salary = AVG(Salary);", "SELECT Salary FROM AVG(Employees);"], a: 0, code: [0, 1, 2, 3], why: "The inner query works out the average first. The outer query then keeps rows where Salary is greater than it. Aggregates like AVG() cannot be used directly in WHERE." },
+    { t: "sq", q: "What does MAX(Salary) return?", o: ["The smallest salary", "The average salary", "The largest salary", "The number of employees"], a: 2, why: "MAX() returns the largest value in the column." },
+    { t: "sq", q: "Which query finds employee(s) earning the highest salary?", o: ["SELECT * FROM Employees WHERE Salary = (SELECT MAX(Salary) FROM Employees);", "SELECT MAX(*) FROM Employees;", "SELECT * FROM Employees WHERE Salary > MAX(Salary);", "SELECT * FROM MAX(Employees);"], a: 0, code: [0, 1, 2, 3], why: "The inner query finds the top salary. The outer query returns every employee who earns exactly that, so ties are included." },
+    { t: "sq", q: "In a subquery, what is the role of the outer query?", o: ["It uses the inner query's result to select rows", "It deletes the database automatically", "It creates a password", "It turns numbers into images"], a: 0, why: "The inner query produces a value or list. The outer query uses it to decide which rows to return." },
+    { t: "sq", q: "A data analyst wants employees in the same department as employee 101. What can the inner query return?", o: ["The department of employee 101", "Every salary total in the country", "The table's file size", "The number of columns in MySQL"], a: 0, why: "Look up employee 101's department in the inner query. The outer query then lists everyone in that department." },
+    { t: "sq", q: "Which aggregate function can be used in a subquery to find the lowest salary?", o: ["MIN()", "JOIN()", "ORDER()", "COLUMN()"], a: 0, why: "MIN() returns the smallest value. JOIN is a clause for combining tables, and ORDER and COLUMN are not aggregate functions." },
+    { t: "sq", q: "Why might a data analyst use a subquery?", o: ["To filter rows based on a calculated result", "To prevent all SELECT statements", "To make every value unique automatically", "To replace every table with a chart"], a: 0, why: "Subqueries let you filter by something you have to calculate first, such as an average, a maximum or another row's value." }
+  ];
+
+  var LETTERS = ["A", "B", "C", "D"];
+  var $ = function (id) { return document.getElementById(id); };
+
+  var screens = { start: $("start"), quiz: $("quiz"), results: $("results") };
+  var state = { pool: [], i: 0, answers: [], locked: false, topic: "all" };
+
+  function show(name) {
+    for (var k in screens) screens[k].hidden = (k !== name);
+    window.scrollTo(0, 0);
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  /* ---- best score (safe if storage is blocked) ---- */
+  function loadBest() {
+    try { return JSON.parse(localStorage.getItem("sqlquiz-best") || "{}"); } catch (e) { return {}; }
+  }
+  function saveBest(topic, score, total) {
+    try {
+      var b = loadBest();
+      var prev = b[topic];
+      if (!prev || score / total > prev.score / prev.total) {
+        b[topic] = { score: score, total: total };
+        localStorage.setItem("sqlquiz-best", JSON.stringify(b));
+      }
+    } catch (e) {}
+  }
+  function showBest() {
+    var topic = document.querySelector('input[name="topic"]:checked').value;
+    var b = loadBest()[topic];
+    $("bestNote").textContent = b ? "Your best here: " + b.score + " of " + b.total : "";
+  }
+
+  /* ---- start ---- */
+  function startQuiz(pool, topic) {
+    state.pool = pool;
+    state.topic = topic;
+    state.i = 0;
+    state.answers = [];
+    state.locked = false;
+    show("quiz");
+    renderQuestion();
+  }
+
+  function selectedTopic() {
+    return document.querySelector('input[name="topic"]:checked').value;
+  }
+
+  function poolFor(topic) {
+    return QUESTIONS.filter(function (q) { return topic === "all" || q.t === topic; });
+  }
+
+  /* ---- question ---- */
+  function renderQuestion() {
+    var q = state.pool[state.i];
+    var total = state.pool.length;
+    state.locked = false;
+
+    screens.quiz.setAttribute("data-topic", q.t);
+    $("qChip").textContent = TOPICS[q.t].name;
+    $("qCount").textContent = "Question " + (state.i + 1) + " of " + total;
+    var pct = Math.round((state.i / total) * 100);
+    $("progressFill").style.width = pct + "%";
+    $("progressBar").setAttribute("aria-valuenow", pct);
+
+    $("qText").textContent = q.q;
+    var sql = $("qSql");
+    if (q.sql) { sql.textContent = q.sql; sql.hidden = false; } else { sql.hidden = true; }
+
+    var list = $("options");
+    list.innerHTML = "";
+    q.o.forEach(function (text, idx) {
+      var li = el("li");
+      var b = el("button", "opt");
+      b.type = "button";
+      b.setAttribute("data-idx", idx);
+      b.appendChild(el("span", "letter", LETTERS[idx]));
+      var isCode = q.code && q.code.indexOf(idx) !== -1;
+      b.appendChild(el("span", "txt" + (isCode ? " code" : ""), text));
+      b.addEventListener("click", function () { answer(idx); });
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+
+    $("feedback").innerHTML = "";
+    $("nextRow").hidden = true;
+    $("nextBtn").textContent = (state.i === total - 1) ? "See results" : "Next question";
+    $("qText").focus({ preventScroll: true });
+  }
+
+  function answer(idx) {
+    if (state.locked) return;
+    state.locked = true;
+    var q = state.pool[state.i];
+    var ok = idx === q.a;
+    state.answers.push({ q: q, picked: idx, ok: ok });
+
+    var btns = $("options").querySelectorAll(".opt");
+    btns.forEach(function (b, n) {
+      b.disabled = true;
+      if (n === q.a) b.classList.add("correct");
+      else if (n === idx) b.classList.add("wrong");
+      else b.classList.add("dim");
+    });
+
+    var fb = el("div", "feedback" + (ok ? "" : " no"));
+    fb.appendChild(el("strong", "", ok ? "Correct." : "Not quite. The answer is " + LETTERS[q.a] + "."));
+    fb.appendChild(el("p", "", q.why));
+    $("feedback").innerHTML = "";
+    $("feedback").appendChild(fb);
+
+    $("nextRow").hidden = false;
+    $("nextBtn").focus({ preventScroll: true });
+  }
+
+  function next() {
+    if (!state.locked) return;
+    if (state.i < state.pool.length - 1) {
+      state.i++;
+      renderQuestion();
+    } else {
+      renderResults();
+    }
+  }
+
+  /* ---- results ---- */
+  function renderResults() {
+    show("results");
+    var total = state.answers.length;
+    var score = state.answers.filter(function (a) { return a.ok; }).length;
+    var pct = score / total;
+
+    if (state.pool.length === poolFor(state.topic).length) saveBest(state.topic, score, total);
+
+    $("ringNum").textContent = score;
+    $("ringOf").textContent = "of " + total;
+    var fg = $("ringFg");
+    fg.style.strokeDashoffset = 440;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { fg.style.strokeDashoffset = 440 - 440 * pct; });
+    });
+
+    var title, sub;
+    if (pct === 1) { title = "Perfect score."; sub = "Every answer was right."; }
+    else if (pct >= 0.8) { title = "Strong result."; sub = "You know this material well. Check the few you missed below."; }
+    else if (pct >= 0.6) { title = "Good progress."; sub = "The basics are in place. Review the missed questions and try again."; }
+    else { title = "Worth another pass."; sub = "Read the explanations below, then retry the questions you missed."; }
+    $("resTitle").textContent = title;
+    $("resSub").textContent = sub;
+
+    // per-topic breakdown
+    var bd = $("breakdown");
+    bd.innerHTML = "";
+    ["pk", "fk", "sq"].forEach(function (t) {
+      var items = state.answers.filter(function (a) { return a.q.t === t; });
+      if (!items.length) return;
+      var got = items.filter(function (a) { return a.ok; }).length;
+      var row = el("div", "brow");
+      row.setAttribute("data-topic", t);
+      row.appendChild(el("span", "", TOPICS[t].name));
+      var bar = el("div", "bar");
+      var fill = el("div");
+      fill.style.width = Math.round((got / items.length) * 100) + "%";
+      bar.appendChild(fill);
+      row.appendChild(bar);
+      row.appendChild(el("span", "val", got + "/" + items.length));
+      bd.appendChild(row);
+    });
+
+    // review
+    var missed = state.answers.filter(function (a) { return !a.ok; });
+    var rv = $("review");
+    rv.innerHTML = "";
+    $("retryMissed").hidden = missed.length === 0;
+    if (!missed.length) {
+      rv.appendChild(el("p", "perfect", "Nothing to review. You answered every question correctly."));
+      return;
+    }
+    rv.appendChild(el("h3", "", "Review " + missed.length + " missed question" + (missed.length > 1 ? "s" : "")));
+    missed.forEach(function (a) {
+      var item = el("article", "rev-item");
+      item.setAttribute("data-topic", a.q.t);
+      item.appendChild(el("p", "rq", a.q.q));
+      if (a.q.sql) item.appendChild(el("pre", "sql", a.q.sql));
+      var ans = el("div", "ans");
+      var yours = el("span", "yours", "Your answer: " + LETTERS[a.picked] + ". " + a.q.o[a.picked]);
+      var right = el("span", "right", "Correct answer: " + LETTERS[a.q.a] + ". " + a.q.o[a.q.a]);
+      ans.appendChild(yours);
+      ans.appendChild(right);
+      item.appendChild(ans);
+      item.appendChild(el("p", "why", a.q.why));
+      rv.appendChild(item);
+    });
+  }
+
+  /* ---- events ---- */
+  $("startBtn").addEventListener("click", function () {
+    var t = selectedTopic();
+    startQuiz(poolFor(t), t);
+  });
+  document.querySelectorAll('input[name="topic"]').forEach(function (r) {
+    r.addEventListener("change", showBest);
+  });
+  $("nextBtn").addEventListener("click", next);
+  $("quitBtn").addEventListener("click", function () { show("start"); showBest(); });
+  $("retryAll").addEventListener("click", function () { startQuiz(poolFor(state.topic), state.topic); });
+  $("retryMissed").addEventListener("click", function () {
+    var pool = state.answers.filter(function (a) { return !a.ok; }).map(function (a) { return a.q; });
+    startQuiz(pool, state.topic);
+  });
+  $("homeBtn").addEventListener("click", function () { show("start"); showBest(); });
+
+  document.addEventListener("keydown", function (e) {
+    if (screens.quiz.hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key.toLowerCase();
+    var idx = ["a", "b", "c", "d"].indexOf(k);
+    if (idx !== -1 && !state.locked) { answer(idx); return; }
+    if ((e.key === "Enter" || e.key === "ArrowRight") && state.locked) {
+      if (document.activeElement === $("nextBtn") && e.key === "Enter") return; // button handles its own click
+      e.preventDefault();
+      next();
+    }
+  });
+
+  showBest();
+})();
+</script>
+</body>
+</html>
